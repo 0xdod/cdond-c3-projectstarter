@@ -41,6 +41,8 @@ jobs:
     <<: *docker_node
     steps:
         - checkout
+        - restore_cache:
+            keys: [frontend-build]
         - run:
             name: test frontend
             command: |
@@ -51,6 +53,8 @@ jobs:
     <<: *docker_node
     steps:
         - checkout
+        - restore_cache:
+            keys: [backend-build]
         - run:
             name: test backend
             command: |
@@ -62,6 +66,8 @@ jobs:
         <<: *docker_node
         steps:
             - checkout
+            - restore_cache:
+               keys: [backend-build]
             - run: 
                 name: scan frontend for vunerebility
                 command: |
@@ -72,6 +78,8 @@ jobs:
         <<: *docker_node
         steps:
             - checkout
+            - restore_cache:
+                keys: [backend-build]
             - run: 
                 name: scan frontend for vunerebility
                 command: |
