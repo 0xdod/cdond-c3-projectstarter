@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [frontend-deps]
       - run:
           name: Build front-end
           command: |
@@ -19,14 +19,14 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build
+          key: frontend-deps
 
   build-backend:
     <<: *docker_node
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [backend-deps]
       - run:
           name: Back-end build
           command: |
@@ -35,14 +35,14 @@ jobs:
              npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build
+          key: backend-deps
 
   test-frontend:
     <<: *docker_node
     steps:
         - checkout
         - restore_cache:
-            keys: [frontend-build]
+            keys: [frontend-deps]
         - run:
             name: test frontend
             command: |
@@ -54,7 +54,7 @@ jobs:
     steps:
         - checkout
         - restore_cache:
-            keys: [backend-build]
+            keys: [backend-deps]
         - run:
             name: test backend
             command: |
@@ -67,7 +67,7 @@ jobs:
         steps:
             - checkout
             - restore_cache:
-               keys: [backend-build]
+               keys: [backend-deps]
             - run: 
                 name: scan frontend for vunerebility
                 command: |
@@ -80,7 +80,7 @@ jobs:
         steps:
             - checkout
             - restore_cache:
-                keys: [backend-build]
+                keys: [backend-deps]
             - run: 
                 name: scan backend for vunerebility
                 command: |
