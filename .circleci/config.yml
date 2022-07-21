@@ -48,7 +48,8 @@ jobs:
             command: |
                 cd frontend
                 npm install
-                npm run test
+                npm run 
+                
   test-backend:
     <<: *docker_node
     steps:
@@ -62,7 +63,7 @@ jobs:
                 npm install
                 npm run test
 
-    scan-frontend:
+  scan-frontend:
         <<: *docker_node
         steps:
             - checkout
@@ -74,7 +75,7 @@ jobs:
                     cd frontend
                     npm audit --audit-level critical
 
-    scan-backend:
+  scan-backend:
         <<: *docker_node
         steps:
             - checkout
