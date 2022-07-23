@@ -110,9 +110,9 @@ jobs:
           name: scan backend for vunerebility
           command: |
             cd backend
-            npm i --package-lock-only
-            npm audit fix --audit-level=critical --force
-            npm audit
+            # npm i --package-lock-only
+            # npm audit fix --audit-level=critical --force
+            # npm audit
       - slack/notify:
           mentions: "@damilola"
           event: fail
