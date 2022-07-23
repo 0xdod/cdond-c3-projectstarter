@@ -2,7 +2,7 @@ version: 2.1
 
 docker_node: &docker_node
   docker:
-    - image: cimg/node:18.4.0
+    - image: cimg/node:13.8.0
 
 jobs:
   build-frontend:
