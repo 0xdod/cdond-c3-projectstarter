@@ -1,28 +1,11 @@
 version: 2.1
 
-docker_node: &docker_node
+docker_anchor: &docker_node
   docker:
     - image: cimg/node:13.8.0
 
 orbs:
   slack: circleci/slack@4.10.1
-
-jobs:
-  deploy:
-    executor:
-      name: node/default
-    steps:
-      - checkout
-      - node/install-packages
-      - run:
-          command: npm run deploy
-      
-workflows:
-  deploy_and_notify:
-    jobs:
-      - deploy:
-          context: slack-secrets
-
 
 jobs:
   build-frontend:
@@ -41,7 +24,7 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-deps
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
 
@@ -61,7 +44,7 @@ jobs:
           paths: [backend/node_modules]
           key: backend-deps
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
 
@@ -78,7 +61,7 @@ jobs:
             npm install
             npm run test
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
 
@@ -95,7 +78,7 @@ jobs:
             npm install
             npm run test
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
 
@@ -111,9 +94,9 @@ jobs:
             cd frontend
             npm i --package-lock-only
             npm audit fix --audit-level=critical --force
-            npm audit --audit-level critical 
+            npm audit --audit-level critical
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
 
@@ -131,9 +114,10 @@ jobs:
             npm audit fix --audit-level=critical --force
             npm audit
       - slack/notify:
-          mentions: '@damilola'
+          mentions: "@damilola"
           event: fail
           template: basic_fail_1
+
 workflows:
   default:
     jobs:
