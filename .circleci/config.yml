@@ -1,8 +1,8 @@
 version: 2.1
 
 docker_node: &docker_node
-    docker:
-        - image: cimg/node:13.8.0
+  docker:
+    - image: cimg/node:18.4.0
 
 jobs:
   build-frontend:
@@ -30,9 +30,9 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             cd backend
-             npm install
-             npm run build
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-deps
@@ -40,55 +40,53 @@ jobs:
   test-frontend:
     <<: *docker_node
     steps:
-        - checkout
-        - restore_cache:
-            keys: [frontend-deps]
-        - run:
-            name: test frontend
-            command: |
-                cd frontend
-                npm install
-                npm run test
+      - checkout
+      - restore_cache:
+          keys: [frontend-deps]
+      - run:
+          name: test frontend
+          command: |
+            cd frontend
+            npm install
+            npm run test
   test-backend:
     <<: *docker_node
     steps:
-        - checkout
-        - restore_cache:
-            keys: [backend-deps]
-        - run:
-            name: test backend
-            command: |
-                cd backend
-                npm install
-                npm run test
+      - checkout
+      - restore_cache:
+          keys: [backend-deps]
+      - run:
+          name: test backend
+          command: |
+            cd backend
+            npm install
+            npm run test
 
   scan-frontend:
-        <<: *docker_node
-        steps:
-            - checkout
-            - restore_cache:
-               keys: [backend-deps]
-            - run: 
-                name: scan frontend for vunerebility
-                command: |
-                    cd frontend
-                    npm install
-                    npm audit fix --force
-                    npm audit --audit-level critical
+    <<: *docker_node
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-deps]
+      - run:
+          name: scan frontend for vunerebility
+          command: |
+            cd frontend
+            npm audit fix --force
+            npm audit --audit-level critical
 
   scan-backend:
-        <<: *docker_node
-        steps:
-            - checkout
-            - restore_cache:
-                keys: [backend-deps]
-            - run: 
-                name: scan backend for vunerebility
-                command: |
-                    cd backend
-                    npm install
-                    npm audit fix --force
-                    npm audit --audit-level critical
+    <<: *docker_node
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-deps]
+      - run:
+          name: scan backend for vunerebility
+          command: |
+            cd backend
+            npm audit fix --force
+            npm audit --audit-level critical
 workflows:
   default:
     jobs:
@@ -98,10 +96,9 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires:
-              - build-backend
+            - build-backend
       - scan-frontend:
           requires: [build-frontend]
       - scan-backend:
           requires:
-                - build-backend
-
+            - build-backend
