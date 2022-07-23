@@ -8,6 +8,23 @@ orbs:
   slack: circleci/slack@4.10.1
 
 jobs:
+  deploy:
+    executor:
+      name: node/default
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: npm run deploy
+      
+workflows:
+  deploy_and_notify:
+    jobs:
+      - deploy:
+          context: slack-secrets
+
+
+jobs:
   build-frontend:
     <<: *docker_node
     steps:
@@ -23,6 +40,10 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-deps
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
 
   build-backend:
     <<: *docker_node
@@ -39,6 +60,10 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-deps
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
 
   test-frontend:
     <<: *docker_node
@@ -52,6 +77,11 @@ jobs:
             cd frontend
             npm install
             npm run test
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
+
   test-backend:
     <<: *docker_node
     steps:
@@ -64,6 +94,10 @@ jobs:
             cd backend
             npm install
             npm run test
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
 
   scan-frontend:
     <<: *docker_node
@@ -77,7 +111,11 @@ jobs:
             cd frontend
             npm i --package-lock-only
             npm audit fix --audit-level=critical --force
-            npm audit --audit-level critical
+            npm audit --audit-level critical 
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
 
   scan-backend:
     <<: *docker_node
@@ -92,18 +130,28 @@ jobs:
             npm i --package-lock-only
             npm audit fix --audit-level=critical --force
             npm audit
+      - slack/notify:
+          mentions: '@damilola'
+          event: fail
+          template: basic_fail_1
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
+      - build-frontend:
+          context: slack-secrets
+      - build-backend:
+          context: slack-secrets
       - test-frontend:
           requires: [build-frontend]
+          context: slack-secrets
       - test-backend:
           requires:
             - build-backend
+          context: slack-secrets
       - scan-frontend:
           requires: [build-frontend]
+          context: slack-secrets
       - scan-backend:
           requires:
             - build-backend
+          context: slack-secrets
