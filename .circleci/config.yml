@@ -4,6 +4,9 @@ docker_node: &docker_node
   docker:
     - image: cimg/node:13.8.0
 
+orbs:
+  slack: circleci/slack@4.10.1
+
 jobs:
   build-frontend:
     <<: *docker_node
