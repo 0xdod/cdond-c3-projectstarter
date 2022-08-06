@@ -8,6 +8,20 @@ orbs:
   slack: circleci/slack@4.10.1
 
 commands:
+  install-aws:
+    description: Install aws and python3 on ubuntu
+    steps:
+      - run:
+          name: Install python3
+          command: |
+            sudo apt update
+            sudo apt install -y python3
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt update
+            sudo apt install -y awscli
+
   destroy-envs:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -19,6 +33,8 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            aws s3 rm s3://mybucket --recursive
+            aws s3 rb s3://my-bucket
             aws cloudformation delete-stack \
               --stack-name "udapeople-backendinfra-<< parameters.workflow_id >>"
             aws cloudformation delete-stack \
@@ -201,6 +217,7 @@ jobs:
       - image: willhallonline/ansible:2.13-ubuntu-22.04
     steps:
       - checkout
+      - install-aws
       - add_ssh_keys:
           fingerprints:
             - "e6:9f:36:3b:42:55:2a:df:7b:1a:44:a3:57:65:8b:6e"
@@ -211,11 +228,13 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-envs
 
   run-migrations:
     <<: *docker_node
     steps:
       - checkout
+      - install-aws
       - run:
           name: Run migrations
           command: |
@@ -233,21 +252,13 @@ jobs:
                 # If you are using kvdb.io, generate the bucket ID "9GE4jRtKznmVKRfvdBABBe" in your local terminal first
                 curl https://kvdb.io/2iE8WfdzgLf2FqKXWTkj2C/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
+      - destroy-envs
 
   deploy-frontend:
     <<: *docker_node
     steps:
       - checkout
-      - run:
-          name: Install python3
-          command: |
-            sudo apt update
-            sudo apt install -y python3
-      - run:
-          name: Install awscli
-          command: |
-            sudo apt update
-            sudo apt install -y awscli
+      - install-aws
       - run:
           name: Get backend url
           command: |
@@ -305,47 +316,38 @@ jobs:
 
       # Here's where you will add some code to rollback on failure
 
-  # smoke-test:
-  #   <<: *docker_node
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Install python3
-  #         command: |
-  #           sudo apt update
-  #           sudo apt install -y python3
-  #     - run:
-  #         name: Install awscli
-  #         command: |
-  #           sudo apt update
-  #           sudo apt install -y awscli
-  #      - run:
-  #         name: Get backend url
-  #         command: |
-  #           export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress")
-  #           export API_URL="http://${BACKEND_IP}:3030"
-  #           echo "${API_URL}"
-  #           if curl "${API_URL}/api/status" | grep "ok"
-  #           then
-  #               return 0
-  #           else
-  #               return 1
-  #           fi
-  #     - run:
-  #         name: Frontend smoke test.
-  #         command: |
-  #           URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
-  #           echo ${URL}
-  #           if curl -s ${URL} | grep "Welcome"
-  #           then
-  #               # Change this to 0 after the job fails
-  #             return 1
-  #           else
-  #             return 1
-  #           fi
-  #     - revert-migrations
-  #     - destroy-envs
-  #     # Here's where you will add some code to rollback on failure
+  smoke-test:
+    <<: *docker_node
+    steps:
+      - checkout
+      - install-aws
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress")
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"
+            echo ${URL}
+            if curl -s ${URL} | grep "Welcome"
+            then
+                # Change this to 0 after the job fails
+              return 1
+            else
+              return 1
+            fi
+      - revert-migrations
+      - destroy-envs
+      # Here's where you will add some code to rollback on failure
 
 workflows:
   default:
@@ -355,22 +357,21 @@ workflows:
       # - test-frontend:
       #     requires: [build-frontend]
       # - test-backend:
-      #     requires:
-      #       - build-backend
+      #     requires: [build-backend]
       # - scan-frontend:
       #     requires: [build-frontend]
       # - scan-backend:
-      #     requires:
-      #       - build-backend
+      #     requires: [build-backend]
       - deploy-infrastructure
       - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
+          requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
-          requires:
-            - run-migrations
+          requires: [run-migrations]
       - deploy-backend:
+          requires: [run-migrations]
+      - smoke-test:
           requires:
-            - run-migrations
+            - deploy-backend
+            - deploy-frontend
