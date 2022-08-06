@@ -24,6 +24,7 @@ commands:
       - run:
           name: Install ansible
           command: |
+            python3 -m pip install --upgrade pip
             python3 -m pip install --user ansible
       - run:
           name: Install awscli
