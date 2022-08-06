@@ -9,13 +9,22 @@ orbs:
 
 commands:
   install-aws:
-    description: Install aws and python3 on ubuntu
+    description: Install aws, ansible and python3 on ubuntu
     steps:
       - run:
           name: Install python3
           command: |
             sudo apt update
             sudo apt install -y python3
+      - run:
+          name: Install python3-pip
+          command: |
+            sudo apt update
+            sudo apt install -y python3-pip
+      - run:
+          name: Install ansible
+          command: |
+            python3 -m pip install --user ansible
       - run:
           name: Install awscli
           command: |
@@ -213,8 +222,7 @@ jobs:
       - destroy-envs
 
   configure-infrastructure:
-    docker:
-      - image: willhallonline/ansible:2.13-ubuntu-22.04
+    <<: *docker_node
     steps:
       - checkout
       - install-aws
@@ -349,6 +357,23 @@ jobs:
       - destroy-envs
       # Here's where you will add some code to rollback on failure
 
+  cloudfront-update:
+      <<: *docker_node
+    steps:
+      - checkout
+      - install-aws
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
+      # Here's where you will add some code to rollback on failure  
+      - revert-migrations
+      - destroy-envs
+
 workflows:
   default:
     jobs:
@@ -375,3 +400,5 @@ workflows:
           requires:
             - deploy-backend
             - deploy-frontend
+      - cloudfront-update:
+          requires: [smoke-test]
