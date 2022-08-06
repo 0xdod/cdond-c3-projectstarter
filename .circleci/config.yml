@@ -2,7 +2,7 @@ version: 2.1
 
 docker_anchor: &docker_node
   docker:
-    - image: cimg/node:13.8.0
+    - image: cimg/node:18.6.0
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -23,6 +23,26 @@ commands:
               --stack-name "udapeople-backendinfra-<< parameters.workflow_id >>"
             aws cloudformation delete-stack \
               --stack-name "udapeople-frontendinfra-<< parameters.workflow_id >>"
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    #parameters:
+    # Add parameter here
+    steps:
+      - run:
+          name: Revert migrations
+          # Add when this will run
+          when: on_fail
+          command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable 
+            SUCCESS=$(curl --insecure https://kvdb.io/2iE8WfdzgLf2FqKXWTkj2C/migration_$\{CIRCLE_WORKFLOW_ID:0:7\})
+            if(( $SUCCESS==1 )); 
+            then
+              cd ~/project/backend
+              npm install
+            #  Add revert code here. You can find this in the Getting Started section.
+              npm run migrations:revert
+            fi
 
 jobs:
   build-frontend:
@@ -192,6 +212,90 @@ jobs:
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
 
+  run-migrations:
+    <<: *docker_node
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm install
+            # Run and save the migration output
+            npm run migrations > migrations_dump.txt
+      - run:
+          name: Send migration results to memstash
+          command: |
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+                # If you are using memstash.io, generate the token "7933fe63-4687-4fa1-8426-aa25aa1730ec" on the website
+                # curl -H "Content-Type: text/plain" -H "token: 7933fe63-4687-4fa1-8426-aa25aa1730ec" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+                # If you are using kvdb.io, generate the bucket ID "9GE4jRtKznmVKRfvdBABBe" in your local terminal first
+                curl https://kvdb.io/2iE8WfdzgLf2FqKXWTkj2C/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            fi
+
+  deploy-frontend:
+    <<: *docker_node
+    steps:
+      - checkout
+      - run:
+        name: Install python3
+        command: |
+          sudo apt update
+          sudo apt install -y python3
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt update
+            sudo apt install -y awscli
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress")
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - revert-migrations
+      - destroy-envs
+
+  deploy-backend:
+    docker:
+      - image: willhallonline/ansible:2.13-ubuntu-22.04
+
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "e6:9f:36:3b:42:55:2a:df:7b:1a:44:a3:57:65:8b:6e"
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - revert-migrations
+      - destroy-envs
+
+      # Here's where you will add some code to rollback on failure
+
 workflows:
   default:
     jobs:
@@ -211,3 +315,11 @@ workflows:
       - configure-infrastructure:
           requires:
             - deploy-infrastructure
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires:
+            - run-migrations
+      - deploy-backend:
+          requires:
+            - run-migrations
