@@ -8,30 +8,35 @@ orbs:
   slack: circleci/slack@4.10.1
 
 commands:
+  install-python:
+    description: Install python on ubuntu
+      steps:
+        - run:
+            name: Install python3
+            command: |
+              sudo apt update
+              sudo apt install -y python3
+        - run:
+            name: Install python3-pip
+            command: |
+              sudo apt update
+              sudo apt install -y python3-pip
   install-aws:
-    description: Install aws, ansible and python3 on ubuntu
+    description: Install aws ubuntu
     steps:
-      - run:
-          name: Install python3
-          command: |
-            sudo apt update
-            sudo apt install -y python3
-      - run:
-          name: Install python3-pip
-          command: |
-            sudo apt update
-            sudo apt install -y python3-pip
-      - run:
-          name: Install ansible
-          command: |
-            python3 -m pip install --upgrade pip
-            python3 -m pip install --user ansible
       - run:
           name: Install awscli
           command: |
             sudo apt update
             sudo apt install -y awscli
-
+  install-ansible:
+    description: Install ansible and python3 on ubuntu
+    steps:
+      - run:
+          name: Install ansible
+          command: |
+            python3 -m pip install --upgrade pip
+            python3 -m pip install --user ansible
   destroy-envs:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -43,13 +48,12 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws s3 rm s3://mybucket --recursive
-            aws s3 rb s3://my-bucket
+            aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
+            aws s3 rb s3://udapeople-<< parameters.workflow_id >>
             aws cloudformation delete-stack \
               --stack-name "udapeople-backendinfra-<< parameters.workflow_id >>"
             aws cloudformation delete-stack \
               --stack-name "udapeople-frontendinfra-<< parameters.workflow_id >>"
-
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     #parameters:
@@ -226,6 +230,8 @@ jobs:
     <<: *docker_node
     steps:
       - checkout
+      - install-python
+      - install-ansible
       - install-aws
       - add_ssh_keys:
           fingerprints:
@@ -242,8 +248,11 @@ jobs:
   run-migrations:
     <<: *docker_node
     steps:
-      - checkout
+      - checkout 
+      - install-python
       - install-aws
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Run migrations
           command: |
@@ -267,7 +276,10 @@ jobs:
     <<: *docker_node
     steps:
       - checkout
+      - install-python
       - install-aws
+      - restore_cache:
+          keys: [frontend-deps]
       - run:
           name: Get backend url
           command: |
@@ -288,25 +300,19 @@ jobs:
       - destroy-envs
 
   deploy-backend:
-    docker:
-      - image: willhallonline/ansible:2.13-ubuntu-22.04
+    <<: *docker_node
     steps:
       - checkout
+      - install-python
+      - install-ansible
+      - install-aws
       - add_ssh_keys:
           fingerprints:
             - "e6:9f:36:3b:42:55:2a:df:7b:1a:44:a3:57:65:8b:6e"
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install python3
-          command: |
-            sudo apt update
-            sudo apt install -y python3
-      - run:
-          name: Install awscli
-          command: |
-            sudo apt update
-            sudo apt install -y awscli
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Deploy backend
           command: |
@@ -329,6 +335,7 @@ jobs:
     <<: *docker_node
     steps:
       - checkout
+      - install-python
       - install-aws
       - run:
           name: Get backend url
@@ -362,6 +369,7 @@ jobs:
     <<: *docker_node
     steps:
       - checkout
+      - install-python
       - install-aws
       - run:
           name: Update cloudfront distribution
@@ -379,6 +387,7 @@ jobs:
     <<: *docker_node
     steps:
       - checkout
+      - install-python
       - install-aws
       - run:
           name: Get old stack workflow id
