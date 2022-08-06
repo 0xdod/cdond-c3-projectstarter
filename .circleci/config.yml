@@ -171,13 +171,14 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-envs
-  
-  configure-infrastructure:
-    docker:
-      - image: 
-    - checkout
-    - run:
-        name: 
+
+  # configure-infrastructure:
+  #   docker:
+  #     - image: willhallonline/ansible:2.13-ubuntu-22.04
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name:
 
 workflows:
   default:
