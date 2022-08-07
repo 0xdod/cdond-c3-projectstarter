@@ -2,7 +2,7 @@ version: 2.1
 
 docker_anchor: &docker_node
   docker:
-    - image: cimg/node:16.16.0
+    - image: cimg/node:13.8.0
 
 orbs:
   slack: circleci/slack@4.10.1
