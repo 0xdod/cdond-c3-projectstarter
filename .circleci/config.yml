@@ -2,7 +2,7 @@ version: 2.1
 
 docker_anchor: &docker_node
   docker:
-    - image: cimg/node:16.16.0
+    - image: cimg/node:13.8.0
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -251,8 +251,8 @@ jobs:
       - checkout
       - install-python
       - install-aws
-      # - restore_cache:
-      #     keys: [backend-deps]
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Run migrations
           command: |
@@ -311,8 +311,8 @@ jobs:
             - "e6:9f:36:3b:42:55:2a:df:7b:1a:44:a3:57:65:8b:6e"
       - attach_workspace:
           at: ~/
-      # - restore_cache:
-      #     keys: [backend-deps]
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Deploy backend
           command: |
