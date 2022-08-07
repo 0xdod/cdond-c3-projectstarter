@@ -100,7 +100,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: Back-end build
           command: |
@@ -109,7 +109,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-deps
+          key: backend_deps
       - slack/notify:
           mentions: "@damilola"
           event: fail
@@ -137,7 +137,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: test backend
           command: |
@@ -154,7 +154,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: scan frontend for vunerebility
           command: |
@@ -172,7 +172,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: scan backend for vunerebility
           command: |
@@ -252,13 +252,13 @@ jobs:
       - install-python
       - install-aws
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: Run migrations
           command: |
             cd backend
             npm install
-            npm install -g typescript
+            npm install typescript --save-dev
             # Run and save the migration output
             npm run migrations > migrations_dump.txt
       - run:
@@ -313,13 +313,12 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend_deps]
       - run:
           name: Deploy backend
           command: |
             # your code here
             cd backend
-            npm install -g typescript
             npm i
             npm run build
             cd ..
