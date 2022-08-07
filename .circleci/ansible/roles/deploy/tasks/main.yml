@@ -1,4 +1,5 @@
 - name: "extract backend artifact."
+  become: true
   unarchive:
     src: ~/project/artifact.tar.gz
     dest: /tmp
