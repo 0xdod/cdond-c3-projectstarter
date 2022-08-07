@@ -5,15 +5,15 @@
     dest: /tmp
     remote_src: no
 
-- name: update apt package
-  become: true
-  apt:
-    update_cache: true
+# - name: update apt package
+#   become: true
+#   apt:
+#     update_cache: true
 
-- name: remove unnecessary deps
-  become: true
-  apt:
-    autoremove: true
+# - name: remove unnecessary deps
+#   become: true
+#   apt:
+#     autoremove: true
 
 - name: upgrade packages
   become: true
