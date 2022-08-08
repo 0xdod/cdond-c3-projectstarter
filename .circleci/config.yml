@@ -27,11 +27,16 @@ commands:
   install-ansible:
     description: Install ansible and python3 on ubuntu
     steps:
+      - restore_cache:
+          keys: [pip-ansible]
       - run:
           name: Install ansible
           command: |
             python3 -m pip install --upgrade pip
             python3 -m pip install --user ansible
+      - save_cache:
+          paths: [/home/circleci/.cache/pip]
+          key: pip-ansible
   destroy-envs:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
