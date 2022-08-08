@@ -19,30 +19,30 @@
 #   apt:
 #     autoremove: true
 
-- name: upgrade packages
-  become: true
-  apt:
-    upgrade: true
+# - name: upgrade packages
+#   become: true
+#   apt:
+#     upgrade: true
 
-- name: install python.
-  become: true
-  apt:
-    name: ["python3"]
-    state: latest
+# - name: install python.
+#   become: true
+#   apt:
+#     name: ["python3"]
+#     state: latest
 
-- name: install nodejs
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
+# - name: install nodejs
+#   become: true
+#   apt:
+#     name: ["nodejs", "npm"]
+#     state: latest
 
-- name: install pm2
-  become: true
-  npm:
-    name: "pm2"
-    state: present
-    global: true
-    production: true
+# - name: install pm2
+#   become: true
+#   npm:
+#     name: "pm2"
+#     state: present
+#     global: true
+#     production: true
 
 - name: start server
   shell: |
