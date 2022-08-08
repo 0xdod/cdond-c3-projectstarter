@@ -344,7 +344,7 @@ jobs:
             export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            sleep 3m
+            sleep 30s
             if curl "${API_URL}/api/status" | grep "ok"
             then
                 exit 0
@@ -410,6 +410,9 @@ jobs:
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               # your code here
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backendinfra-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontendinfra-${OldWorkflowID}"
             fi
 
 workflows:
