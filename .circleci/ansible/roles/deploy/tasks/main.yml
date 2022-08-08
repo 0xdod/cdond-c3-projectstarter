@@ -2,8 +2,7 @@
   become: true
   unarchive:
     src: ~/project/artifact.tar.gz
-    dest: /tmp
-    remote_src: no
+    dest: ~/
 
 # - name: update apt package
 #   become: true
