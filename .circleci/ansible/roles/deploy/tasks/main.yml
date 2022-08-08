@@ -1,13 +1,13 @@
 - name: Creates directory
   file:
-    path: ~/udapeople
+    path: udapeople
     state: directory
 
 - name: "extract backend artifact."
   become: true
   unarchive:
     src: ~/project/artifact.tar.gz
-    dest: ~/udapeople
+    dest: udapeople
 
 # - name: update apt package
 #   become: true
