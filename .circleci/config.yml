@@ -283,7 +283,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
+            export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output=text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
@@ -416,18 +416,18 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-              export OldWorkflowID=$(cat old_workflow.txt)  
-              export STACKS=$(cat stacks.txt)
-              echo Stack names: "${STACKS}"
-              echo OldWorkflowID: "${OldWorkflowID}"
-              if [[ ${STACKS} =~ ${OldWorkflowID} ]] 
-              then        
-                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-backendinfra-${OldWorkflowID}"
-                aws cloudformation delete-stack --stack-name "udapeople-frontendinfra-${OldWorkflowID}"
-              else
-                echo "cannot delete old stacks"
-              fi
+            export OldWorkflowID=$(cat old_workflow.txt)  
+            export STACKS=$(cat stacks.txt)
+            echo Stack names: "${STACKS}"
+            echo OldWorkflowID: "${OldWorkflowID}"
+            if [[ ${STACKS} =~ ${OldWorkflowID} ]] 
+            then        
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backendinfra-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontendinfra-${OldWorkflowID}"
+            else
+              echo "cannot delete old stacks"
+            fi
       - revert-migrations
       - destroy-envs
 
